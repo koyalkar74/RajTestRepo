@@ -1,0 +1,4 @@
+{
+  "minMuleVersion": "4.2.2-hf1",
+  "secureProperties" : ["encrypt.key","anypoint.platform.client_secret"]
+}

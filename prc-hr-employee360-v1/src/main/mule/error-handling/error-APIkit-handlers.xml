@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:error-handler-plugin="http://www.mulesoft.org/schema/mule/error-handler-plugin"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/error-handler-plugin http://www.mulesoft.org/schema/mule/error-handler-plugin/current/mule-error-handler-plugin.xsd">
+	
+	<error-handler name="error-apikit-handler">
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <set-variable value="#[output application/json
+---
+{
+	status: 400,
+	layer: Mule::p('app.layer'),
+	title: &quot;Bad request&quot;,
+	errorSource: &quot;Client&quot;,
+	detail: error.detailedDescription,
+	description: error.description,
+	errorType: error.errorType.identifier,
+	correlationId: correlationId,	
+	referenceId: uuid()
+}]" doc:name="Set errorLog" doc:id="4e509eb1-2465-47cd-8f9d-28f241e4f906" variableName="errorLog"/>
+			<json-logger:logger doc:name="Logger" doc:id="3f9e47b2-a075-4f76-8f77-cdf5bc4ae4ce" message="BAD_REQUEST" config-ref="JSON_Logger_Config" tracePoint="EXCEPTION">
+				<json-logger:content ><![CDATA[#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]]]></json-logger:content>
+			</json-logger:logger>
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="28ad8249-6f78-4282-b08b-137ac79342f8">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		status: vars.errorLog.status,
+		title:  vars.errorTitle default "System error",
+		correlationId: correlationId,
+		referenceId: vars.errorLog.referenceId
+	}
+]]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND" enableNotifications="true" logException="true">
+                <set-variable value="#[output application/json
+---
+{
+	status: 404,
+	layer: Mule::p('app.layer'),
+	title: &quot;Not found&quot;,
+	source: &quot;Client&quot;,
+	detail: error.detailedDescription,
+	description: error.description,
+	errorType: error.errorType.identifier,
+	correlationId: correlationId,	
+	referenceId: uuid()
+}]" doc:name="Set errorLog" doc:id="029b5808-eef1-417b-89d1-a5d293993591" variableName="errorLog" /> 
+			<json-logger:logger doc:name="Logger" doc:id="71a3c3d4-bdcf-4c1a-b576-2830489cd857" config-ref="JSON_Logger_Config" message="NOT_FOUND" tracePoint="EXCEPTION">
+				<json-logger:content><![CDATA[#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]]]></json-logger:content>
+			</json-logger:logger>
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="3e7983be-034e-474b-ac85-9287e2927d78">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		status: vars.errorLog.status,
+		title:  vars.errorTitle default "System error",
+		correlationId: correlationId,
+		referenceId: vars.errorLog.referenceId
+	}
+]]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <set-variable value="#[output application/json
+---
+{
+	status: 405,
+	layer: Mule::p('app.layer'),
+	title: &quot;Method not allowed&quot;,
+	source: &quot;Client&quot;,
+	detail: error.detailedDescription,
+	description: error.description,
+	errorType: error.errorType.identifier,
+	correlationId: correlationId,	
+	referenceId: uuid()
+}]" doc:name="Set errorLog" doc:id="b20778fe-0c54-427e-83d9-e17b39ca0eb4" variableName="errorLog" />
+			<json-logger:logger doc:name="Logger" doc:id="a57cdb93-acaa-4782-8f0d-11bfafbc8d56" config-ref="JSON_Logger_Config" message="METHOD_NOT_ALLOWED" tracePoint="EXCEPTION">
+				<json-logger:content><![CDATA[#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]]]></json-logger:content>
+			</json-logger:logger>
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="38836cc2-43a2-4baa-9c1d-ffb2a626fd50">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		status: vars.errorLog.status,
+		title:  vars.errorTitle default "System error",
+		correlationId: correlationId,
+		referenceId: vars.errorLog.referenceId
+	}
+]]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[405]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <set-variable value="#[output application/json
+---
+{
+	status: 406,
+	layer: Mule::p('app.layer'),
+	title: &quot;Not acceptable&quot;,
+	source: &quot;Client&quot;,
+	detail: error.detailedDescription,
+	description: error.description,
+	errorType: error.errorType.identifier,
+	correlationId: correlationId,	
+	referenceId: uuid()
+}]" doc:name="Set errorLog" doc:id="b70e5664-a7fe-46b4-bbe7-6842495ad48e" variableName="errorLog" />
+			<json-logger:logger doc:name="Logger" doc:id="3b889420-b008-4fc1-b707-0406d908ba8e" config-ref="JSON_Logger_Config" message="NOT_ACCEPTABLE" tracePoint="EXCEPTION">
+				<json-logger:content><![CDATA[#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]]]></json-logger:content>
+			</json-logger:logger>
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="882b345b-0e68-4e0f-b168-81d466fc20a5">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		status: vars.errorLog.status,
+		title:  vars.errorTitle default "System error",
+		correlationId: correlationId,
+		referenceId: vars.errorLog.referenceId
+	}
+]]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[406]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <set-variable value="#[output application/json
+---
+{
+	status: 415,
+	layer: Mule::p('app.layer'),
+	title: &quot;Unsupported Media Type&quot;,
+	source: &quot;Client&quot;,
+	detail: error.detailedDescription,
+	description: error.description,
+	errorType: error.errorType.identifier,
+	correlationId: correlationId,	
+	referenceId: uuid()
+}]" doc:name="Set errorLog" doc:id="195b74c3-6421-4a49-8ec7-390866cf8433" variableName="errorLog" />
+			<json-logger:logger doc:name="Logger" doc:id="8aafdf89-3126-46fd-b961-14ea1e15d33b" config-ref="JSON_Logger_Config" message="UNSUPPORTED_MEDIA_TYPE" tracePoint="EXCEPTION">
+				<json-logger:content><![CDATA[#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]]]></json-logger:content>
+			</json-logger:logger>
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="475bb891-d984-4669-a426-8ac45a01c621">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		status: vars.errorLog.status,
+		title:  vars.errorTitle default "System error",
+		correlationId: correlationId,
+		referenceId: vars.errorLog.referenceId
+	}
+]]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[415]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <set-variable value="#[output application/json
+---
+{
+	status: 501,
+	layer: Mule::p('app.layer'),
+	title: &quot;Not Implemented&quot;,
+	source: &quot;Client&quot;,
+	detail: error.detailedDescription,
+	description: error.description,
+	errorType: error.errorType.identifier,
+	correlationId: correlationId,	
+	referenceId: uuid()
+}]" doc:name="Set errorLog" doc:id="5f4df3ae-6a6a-42d3-b4cc-3685b3c716dc" variableName="errorLog" />
+			<json-logger:logger doc:name="Logger" doc:id="ebb4cdbc-d9ab-415e-befe-37dc294f4ea8" config-ref="JSON_Logger_Config" message="NOT_IMPLEMENTED" tracePoint="EXCEPTION">
+				<json-logger:content><![CDATA[#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]]]></json-logger:content>
+			</json-logger:logger>
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="8a0145a9-d293-4378-abd3-e5031c978f55">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		status: vars.errorLog.status,
+		title:  vars.errorTitle default "System error",
+		correlationId: correlationId,
+		referenceId: vars.errorLog.referenceId
+	}
+]]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[501]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+	
+</mule>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="service-get-employees-impl-flow" doc:id="e3349565-1c20-4aa1-abb5-48c3780a5ace" >
+		<json-logger:logger doc:name="Logger" doc:id="0aa52edf-ba96-4441-91b6-642eeae600c3" config-ref="JSON_Logger_Config" message="ENTRY : service-get-employees-impl-flow"/>
+		<set-variable value="#[attributes.queryParams.'last_modified_date']" doc:name="Set Last Modified Date" doc:id="f9563675-67fe-42a1-9974-4a7bd06e5e63" variableName="lastModifiedDate"/>
+		<set-variable value="#[attributes.queryParams.'maxRows']" doc:name="Set Max Rows" doc:id="6b807e28-8ec7-4512-9685-d5202a8d5f0d" variableName="maxRows"/>
+		<set-variable value="#[attributes.queryParams.'queryMoreId']" doc:name="Set Query More Id" doc:id="8db0f0b4-6895-41b6-8335-ff531eac6bb0" variableName="queryMoreId"/>
+		<choice doc:name="Choice" doc:id="d0549d31-040c-4522-91e9-4863453124c2" >
+			<when expression="#[vars.queryMoreId == null]">
+				<http:request method="GET" doc:name="Service Employee 360 - Query" doc:id="1f0bd802-0426-4590-806f-42249d95b66f" config-ref="Service_Employee360_HTTP_Request_configuration" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" path="/employees/query">
+					<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"last_modified_date" : vars.lastModifiedDate,
+	"maxRows" : vars.maxRows
+}]]]></http:query-params>
+				</http:request>
+			</when>
+			<otherwise >
+				<http:request method="GET" doc:name="RequestService Employee 360 - Query More" doc:id="debc75ae-a857-4fc3-9c2b-05fbe9de1736" config-ref="Service_Employee360_HTTP_Request_configuration" path="/employees/queryMore">
+					<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"queryMoreId" : vars.queryMoreId
+}]]]></http:query-params>
+				</http:request>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="0bd8bc32-e131-4bcb-b6d5-904bd589be06" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="Logger" doc:id="7815a5c0-b85f-4872-9a23-f0587d8eb3ee" config-ref="JSON_Logger_Config" message="EXIT : service-get-employees-impl-flow"/>
+
+	</flow>
+</mule>

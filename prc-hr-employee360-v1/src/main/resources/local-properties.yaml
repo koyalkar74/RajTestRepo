@@ -1,0 +1,29 @@
+api:
+  id:           "16233222"
+  port:         "8081"
+  basePath:     "/api/v1/*"
+  
+tls.keystore:
+  type:         "pkcs12"  
+  path:         "cert/rest-template-rte.p12"
+  alias:        "server" 
+  
+  
+logger:
+  prettyPrint:  "true"   
+  
+error:
+  sanitize: "false"
+
+correlation:
+  impose: "true"  
+
+api.request.service.employee360:
+  host: "nl-usdv-sys-sapsf-hr-employee360-v1.us-e2.cloudhub.io"
+  port: "80"
+  basePath: "/api/v1"
+  maxRetries: "2"
+  millisecondsBetweenRetries: "60000"
+  responseTimeout: "180000"
+  client_id: "c38883344735460f80886a21b4f9649f"
+  client_secret: "b69d1643424a454caA0503Fa9988EEF8"

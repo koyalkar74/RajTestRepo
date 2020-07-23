@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<error-handler name="error-http-handler" doc:id="0225e908-f3cf-4b6a-8bd9-3984e4d59d79">
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error propagate"
+			doc:id="21e7bb78-29c3-4106-8d90-5c3d89494521" type="HTTP:CONNECTIVITY">
+			<set-variable
+				value="#[output application/json
+---
+{
+	status: error.muleMessage.attributes.StatusCode default 404,
+	layer: Mule::p('api.layer'),
+	title: &quot;Requested resource not found&quot;,
+	errorSource: &quot;HTTP&quot;,
+	detail: error.detailedDescription,
+	description: error.description,
+	errorType: error.errorType.identifier,
+	correlationId: correlationId,	
+	referenceId: uuid()
+}]"
+				doc:name="Set errorLog" doc:id="dcd555f4-b3c5-4779-ba0f-5d9d75badd9a" variableName="errorLog" />
+			<json-logger:logger doc:name="Logger" doc:id="89e4d0fb-c35f-40bd-90f8-6ccc8700d7b0" tracePoint="EXCEPTION"
+				message="CONNECTIVITY" config-ref="JSON_Logger_Config">
+				<json-logger:content ><![CDATA[#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]]]></json-logger:content>
+			</json-logger:logger>
+			<ee:transform doc:name="Transform Message" doc:id="9ec0b23b-80fd-4445-83bc-e43a19659960" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="errorInfo" ><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		status: vars.errorLog.status,
+		title:  vars.errorTitle default "System Error",
+		correlationId: correlationId,
+		referenceId: vars.errorLog.referenceId
+	}
+]]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="72e1a130-0371-46c0-9191-4d6e0d3293db" type="ANY">
+			<choice doc:name="Check if a policy error or API error" doc:id="173affc0-177a-4931-9110-57c5af47f36d" >
+				<when expression="#[error.muleMessage.typedValue.errors != null]">
+				<set-variable value="#[output application/json
+---
+{
+	status: error.muleMessage.attributes.StatusCode default 500,
+	layer: Mule::p('api.layer'),
+	title: &quot;Generic error&quot;,
+	errorSource: &quot;HTTP&quot;,
+	detail: error.detailedDescription,
+	description: error.description,
+	errorType: error.errorType.identifier,
+	correlationId: correlationId,	
+	referenceId: uuid()
+}]" doc:name="Set errorLog" doc:id="939d043f-3e0b-4db2-9870-86aa389c9853" variableName="errorLog" />
+				<json-logger:logger doc:name="Logger errorLog" doc:id="1f1d54c1-7b5c-4715-b785-7d933d1811e3" config-ref="JSON_Logger_Config" tracePoint="EXCEPTION" message="DEFAULT">
+						<json-logger:content ><![CDATA[#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]]]></json-logger:content>
+					</json-logger:logger>
+					<logger level="INFO" doc:name="Logger" doc:id="d23cd00f-c3cf-4264-a203-6c464d847a16" message="#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]" category="ANY"/>
+					<ee:transform doc:name="Transform Message" doc:id="8bcc1e86-20c7-4cf5-b68a-9fd4a6e51247" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="errorInfo" ><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		status: vars.errorLog.status,
+		title:  vars.errorTitle default "System Error",
+		correlationId: correlationId,
+		referenceId: vars.errorLog.referenceId
+	}
+]]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				</when>
+			<otherwise >
+					<set-variable value="#[output application/json
+---
+{
+	status: 401,
+	layer: Mule::p('api.layer'),
+	title: error.description default &quot;System Error&quot;,
+	errorSource: &quot;Client&quot;,
+	detail: error.description,
+	description: error.detailedDescription,
+	errorType: &quot;APP:HTTP_REQUEST_ERROR&quot;,
+	correlationId: correlationId,	
+	referenceId: uuid()
+}]" doc:name="Set errorLog" doc:id="9d3f54ba-5872-456c-9122-e947ee65d8ed" variableName="errorLog" />
+					<json-logger:logger doc:name="Logger errorLog" doc:id="f3aaa1ac-e0fd-40c5-aa65-fa10628bc8e6" config-ref="JSON_Logger_Config" tracePoint="EXCEPTION" message="DEFAULT">
+						<json-logger:content><![CDATA[#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]]]></json-logger:content>
+					</json-logger:logger>
+					<logger level="INFO" doc:name="Logger" doc:id="6dc8b9fa-236e-4671-a282-0cbe70ef85f9" message="#[output application/json
+---
+{
+	errorLog: vars.errorLog
+}]" category="SYSTEM ERROR"/>
+					<ee:transform doc:name="Set errorInfo" doc:id="bffcb9ef-ab58-4b55-9918-fbacd20da72b" >
+						<ee:message />
+						<ee:variables >
+							<ee:set-variable variableName="errorInfo" ><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		status: vars.errorLog.status,
+		title:  vars.errorLog.title,
+		correlationId: correlationId,
+		referenceId: vars.errorLog.referenceId
+	}
+]]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</otherwise>
+			</choice>
+		</on-error-propagate>
+	</error-handler>
+</mule>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+
+
+  <tls:context name="apiTLSContext">
+ <tls:key-store type="${tls.keystore.type}"
+ path="${tls.keystore.path}"
+ password="${secure::tls.keystore.password}"
+ keyPassword="${secure::tls.keystore.keyPassword}" alias="${tls.keystore.alias}" />
+ </tls:context>
+		<!--     
+	<apikit:config name="nestle-rest-api-config"
+		api="${api.spec}"
+		outboundHeadersMapName="outboundHeaders"
+		httpStatusVarName="httpStatus" /> -->
+		
+	<api-gateway:autodiscovery apiId="${api.id}"
+		flowRef="employee360-main"/>
+
+    <configuration-properties file="${env}-properties.yaml" doc:name="Env Config Props"/>
+    
+    <configuration-properties file="properties.yaml" doc:name="Common Config Props"/>
+    
+	<secure-properties:config name="secureEnvPropsConfig" 
+							doc:name="Secure Properties Config" 
+							doc:id="3c184f7b-ee8d-4f43-a9e3-b20d7d0ea3e2" 
+							file="${env}-secure-properties.yaml" key="${encrypt.key}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+  <json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="1ccd194d-363d-4fd9-8f46-22da4a939e9a" applicationName="${app.name}" applicationVersion="${app.version}" environment="${env}"/>
+	<http:request-config name="Service_Employee360_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="5be3268e-9021-46c2-a2e6-86601d244a44" sendCorrelationId="ALWAYS" responseTimeout="${api.request.service.employee360.responseTimeout}" basePath="${api.request.service.employee360.basePath}">
+		<http:request-connection host="${api.request.service.employee360.host}" port="${api.request.service.employee360.port}" >
+			<reconnection >
+				<reconnect frequency="${api.request.service.employee360.millisecondsBetweenRetries}" count="${api.request.service.employee360.maxRetries}" />
+			</reconnection>
+		</http:request-connection>
+		<http:default-headers >
+			<http:default-header key="client_id" value="${api.request.service.employee360.client_id}" />
+			<http:default-header key="client_secret" value="${api.request.service.employee360.client_secret}" />
+		</http:default-headers>
+	</http:request-config>
+	
+
+</mule>
